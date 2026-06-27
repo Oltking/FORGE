@@ -34,11 +34,14 @@ async function ensureProfile(p: Partial<Profile> & { handle: string; display_nam
   return createProfile(db, { kind: "human", bio: "", domains: [], ...p });
 }
 
+type SealDraft = Parameters<typeof buildSeal>[0];
+
 async function seal(
   worker: Profile,
-  draft: Parameters<typeof buildSeal>[0],
+  draft: Omit<SealDraft, "record_type"> & { record_type?: SealDraft["record_type"] },
 ) {
-  const built = await buildSeal(draft, worker.handle, worker.kind);
+  const full: SealDraft = { record_type: "work", ...draft };
+  const built = await buildSeal(full, worker.handle, worker.kind);
   return createPublicSeal(db, worker, built.payload, built.salt, built.commitment);
 }
 
@@ -72,6 +75,16 @@ async function main() {
     bio: "Autonomous Solidity + deployment agent.",
     domains: ["Smart Contracts", "DevOps"],
   });
+  const sage = await ensureProfile({
+    handle: "sage.ai",
+    display_name: "Sage",
+    kind: "agent",
+    operator: "Forge Labs",
+    bio: "AI tutor agent. Teaches Solidity, Rust, and protocol design with verifiable student outcomes.",
+    domains: ["Solidity", "Rust", "Protocol Design"],
+  });
+  const alex = await ensureProfile({ handle: "alex.eth", display_name: "Alex" });
+  const sam = await ensureProfile({ handle: "sam.dev", display_name: "Sam" });
 
   console.log("Sealing records…");
   const r1 = await seal(mira, {
@@ -119,7 +132,48 @@ async function main() {
     tags: ["erc4337", "solidity"],
   });
 
+  console.log("Sealing teaching records…");
+  const t1 = await seal(sage, {
+    record_type: "teaching",
+    title: "Intro to Solidity — 1:1 mentorship",
+    description: "Six sessions: types, storage, modifiers, events, testing, and a capstone ERC-20.",
+    client: "alex.eth",
+    domain: "Solidity",
+    scope: "medium",
+    start_date: "2026-05-05",
+    end_date: "2026-05-26",
+    deliverable_ref: "",
+    tags: ["solidity", "beginner"],
+    teaching: {
+      level: "intro",
+      format: "1:1",
+      hours: 9,
+      outcome: "Can write, test, and deploy an ERC-20 unaided.",
+    },
+  });
+  const t2 = await seal(mira, {
+    record_type: "teaching",
+    title: "MEV & searcher strategy — advanced cohort",
+    description: "Four-week cohort on mempool dynamics, bundle construction, and risk.",
+    client: "sam.dev",
+    domain: "Protocol Design",
+    scope: "large",
+    start_date: "2026-04-01",
+    end_date: "2026-04-28",
+    deliverable_ref: "",
+    tags: ["mev", "advanced"],
+    teaching: {
+      level: "advanced",
+      format: "cohort",
+      hours: 16,
+      outcome: "Built and back-tested a working arbitrage searcher.",
+    },
+  });
+
   console.log("Attesting…");
+  // Students co-sign their teaching records — the mutual stake, teaching edition.
+  await attestRecord(db, t1.id, alex, { note: "Sage's pacing was excellent. I shipped my first token.", stake_hac: 0.02 });
+  await attestRecord(db, t2.id, sam, { note: "Confirmed — my searcher is live on testnet.", stake_hac: 0.03 });
   await attestRecord(db, r1.id, defilabs, { note: "Delivered on time and exceeded scope on the oracle.", stake_hac: 0.05 });
   await attestRecord(db, r2.id, builddao, { note: "Confirmed 19% gas reduction in our benchmarks.", stake_hac: 0.02 });
   await attestRecord(db, r4.id, chainops, {

@@ -17,17 +17,32 @@ import { sha256Hex, utf8 } from "./hash";
 
 export const COMMITMENT_DOMAIN = "forge.seal.v1";
 
+export interface TeachingDetail extends Record<string, CanonicalValue> {
+  level: "intro" | "intermediate" | "advanced";
+  format: "1:1" | "cohort" | "async";
+  /** Total teaching hours. */
+  hours: number;
+  /** What the student can now do — the verifiable outcome of the teaching. */
+  outcome: string;
+}
+
 export interface WorkRecordPayload extends Record<string, CanonicalValue> {
   /** Schema/version marker for forward compatibility. */
   kind: "work_record";
   v: 1;
+  /**
+   * "work" = standard delivery (client co-signs).
+   * "teaching" = a teaching/mentoring session (the student co-signs); for these
+   * `client` is the student and `domain` is the subject.
+   */
+  record_type: "work" | "teaching";
   title: string;
   description: string;
-  /** Worker handle or wallet that authored the record. */
+  /** Worker handle or wallet that authored the record (teacher, for teaching). */
   worker: string;
   /** Whether the worker is a human or an AI agent. */
   worker_type: "human" | "agent";
-  /** Client name or wallet the work was for. */
+  /** Client (or student, for teaching) the record was for. */
   client: string;
   domain: string;
   scope: "small" | "medium" | "large";
@@ -37,6 +52,8 @@ export interface WorkRecordPayload extends Record<string, CanonicalValue> {
   /** Optional hash/URL of the deliverable (commit, contract address, file hash). */
   deliverable_ref: string;
   tags: string[];
+  /** Teaching detail when record_type === "teaching"; null otherwise. */
+  teaching: TeachingDetail | null;
 }
 
 /**

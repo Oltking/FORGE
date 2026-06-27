@@ -34,6 +34,7 @@ export default function SealPage() {
   const [step, setStep] = useState(1);
   const [mode, setMode] = useState<"public" | "nda">("public");
   const [draft, setDraft] = useState<SealDraft>({
+    record_type: "work",
     title: "",
     description: "",
     client: "",
@@ -44,6 +45,13 @@ export default function SealPage() {
     deliverable_ref: "",
     tags: [],
   });
+  const [teaching, setTeaching] = useState({
+    level: "intro" as "intro" | "intermediate" | "advanced",
+    format: "1:1" as "1:1" | "cohort" | "async",
+    hours: 1,
+    outcome: "",
+  });
+  const isTeaching = draft.record_type === "teaching";
   const [tagInput, setTagInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -92,7 +100,10 @@ export default function SealPage() {
     setBusy(true);
     setError(null);
     try {
-      const built = await buildSeal(draft, me.handle, me.kind);
+      const draftWithTeaching: SealDraft = isTeaching
+        ? { ...draft, teaching: { ...teaching, hours: Number(teaching.hours) || 0 } }
+        : draft;
+      const built = await buildSeal(draftWithTeaching, me.handle, me.kind);
       const body =
         mode === "public"
           ? { mode, payload: built.payload, salt: built.salt, commitment: built.commitment }
@@ -161,24 +172,67 @@ export default function SealPage() {
 
       {step === 1 && (
         <div className="card mt-5 space-y-4 p-6">
-          <Field label="What did you build?">
-            <input className="input" value={draft.title} onChange={(e) => update("title", e.target.value)} placeholder="e.g. AMM Protocol V2 — core implementation" />
+          <div>
+            <label className="label">Record type</label>
+            <div className="grid grid-cols-2 gap-2">
+              <TypeToggle active={!isTeaching} onClick={() => update("record_type", "work")} title="Work" body="A delivery your client co-signs." />
+              <TypeToggle active={isTeaching} onClick={() => update("record_type", "teaching")} title="Teaching" body="A session your student co-signs." />
+            </div>
+          </div>
+
+          <Field label={isTeaching ? "What did you teach?" : "What did you build?"}>
+            <input
+              className="input"
+              value={draft.title}
+              onChange={(e) => update("title", e.target.value)}
+              placeholder={isTeaching ? "e.g. Intro to Solidity — 1:1 mentorship" : "e.g. AMM Protocol V2 — core implementation"}
+            />
           </Field>
-          <Field label="Description">
-            <textarea className="input" rows={4} value={draft.description} onChange={(e) => update("description", e.target.value)} placeholder="What was delivered." />
+          <Field label={isTeaching ? "What was covered?" : "Description"}>
+            <textarea className="input" rows={4} value={draft.description} onChange={(e) => update("description", e.target.value)} placeholder={isTeaching ? "Topics, exercises, materials." : "What was delivered."} />
           </Field>
           <div className="grid grid-cols-2 gap-4">
-            <Field label="Client (name or wallet)">
-              <input className="input" value={draft.client} onChange={(e) => update("client", e.target.value)} placeholder="DeFi Labs" />
+            <Field label={isTeaching ? "Student (name or wallet)" : "Client (name or wallet)"}>
+              <input className="input" value={draft.client} onChange={(e) => update("client", e.target.value)} placeholder={isTeaching ? "alex.eth" : "DeFi Labs"} />
             </Field>
-            <Field label="Domain">
-              <select className="input" value={draft.domain} onChange={(e) => update("domain", e.target.value)}>
-                {DOMAINS.map((d) => (
-                  <option key={d} value={d}>{d}</option>
-                ))}
-              </select>
+            <Field label={isTeaching ? "Subject" : "Domain"}>
+              <input className="input" value={draft.domain} onChange={(e) => update("domain", e.target.value)} placeholder={isTeaching ? "Solidity" : undefined} list={isTeaching ? undefined : "domain-list"} />
+              {!isTeaching && (
+                <datalist id="domain-list">
+                  {DOMAINS.map((d) => (
+                    <option key={d} value={d} />
+                  ))}
+                </datalist>
+              )}
             </Field>
           </div>
+
+          {isTeaching && (
+            <div className="space-y-4 rounded-lg border border-[var(--color-line)] bg-[var(--color-ink)] p-4">
+              <div className="grid grid-cols-3 gap-4">
+                <Field label="Level">
+                  <select className="input" value={teaching.level} onChange={(e) => setTeaching((t) => ({ ...t, level: e.target.value as typeof t.level }))}>
+                    <option value="intro">Intro</option>
+                    <option value="intermediate">Intermediate</option>
+                    <option value="advanced">Advanced</option>
+                  </select>
+                </Field>
+                <Field label="Format">
+                  <select className="input" value={teaching.format} onChange={(e) => setTeaching((t) => ({ ...t, format: e.target.value as typeof t.format }))}>
+                    <option value="1:1">1:1</option>
+                    <option value="cohort">Cohort</option>
+                    <option value="async">Async</option>
+                  </select>
+                </Field>
+                <Field label="Hours">
+                  <input type="number" min={0} step={0.5} className="input" value={teaching.hours} onChange={(e) => setTeaching((t) => ({ ...t, hours: Number(e.target.value) }))} />
+                </Field>
+              </div>
+              <Field label="Outcome — what can the student now do?">
+                <textarea className="input" rows={2} value={teaching.outcome} onChange={(e) => setTeaching((t) => ({ ...t, outcome: e.target.value }))} placeholder="e.g. Can write, test, and deploy an ERC-20 unaided." />
+              </Field>
+            </div>
+          )}
           <div className="grid grid-cols-3 gap-4">
             <Field label="Scope">
               <select className="input" value={draft.scope} onChange={(e) => update("scope", e.target.value as SealDraft["scope"])}>
@@ -218,7 +272,7 @@ export default function SealPage() {
           </Field>
           <button
             onClick={() => setStep(2)}
-            disabled={!draft.title || !draft.description || !draft.client}
+            disabled={!draft.title || !draft.description || !draft.client || (isTeaching && !teaching.outcome)}
             className="btn btn-ember w-full disabled:opacity-40"
           >
             Continue
@@ -362,6 +416,32 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <label className="label">{label}</label>
       {children}
     </div>
+  );
+}
+
+function TypeToggle({
+  active,
+  onClick,
+  title,
+  body,
+}: {
+  active: boolean;
+  onClick: () => void;
+  title: string;
+  body: string;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className="rounded-lg border p-3 text-left transition-colors"
+      style={{
+        borderColor: active ? "var(--color-ember)" : "var(--color-line)",
+        background: active ? "rgba(245,158,11,0.06)" : "transparent",
+      }}
+    >
+      <div className="font-medium text-white">{title}</div>
+      <div className="mt-0.5 text-xs text-[var(--color-fog)]">{body}</div>
+    </button>
   );
 }
 

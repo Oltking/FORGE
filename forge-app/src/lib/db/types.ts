@@ -65,9 +65,12 @@ export interface ForgeContract {
   created_at: string;
 }
 
+export type RecordType = "work" | "teaching";
+
 export interface WorkRecord {
   id: string;
   worker_id: string;
+  record_type: RecordType;
   title: string | null;
   description: string | null;
   client_handle: string | null;

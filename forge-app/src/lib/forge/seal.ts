@@ -35,6 +35,7 @@ export async function createPublicSeal(
 
   return createRecord(db, {
     worker_id: worker.id,
+    record_type: payload.record_type ?? "work",
     title: payload.title,
     description: payload.description,
     client_handle: payload.client,

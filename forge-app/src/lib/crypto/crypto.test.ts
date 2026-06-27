@@ -16,6 +16,7 @@ function samplePayload(over: Partial<WorkRecordPayload> = {}): WorkRecordPayload
   return {
     kind: "work_record",
     v: 1,
+    record_type: "work",
     title: "AMM Protocol V2 — core implementation",
     description: "Implemented the constant-product core and fee accounting.",
     worker: "mira.eth",
@@ -27,6 +28,7 @@ function samplePayload(over: Partial<WorkRecordPayload> = {}): WorkRecordPayload
     end_date: "2026-04-12",
     deliverable_ref: "github.com/defilabs/amm/pull/214",
     tags: ["solidity", "evm", "defi"],
+    teaching: null,
     ...over,
   };
 }

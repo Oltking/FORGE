@@ -21,6 +21,11 @@ export default async function RecordPage({ params }: { params: Promise<{ id: str
   const isOwner = profile?.id === record.worker_id;
   const canAttest = Boolean(profile) && !isOwner && !isHidden;
   const attestations = record.attestations ?? [];
+  const isTeaching = record.record_type === "teaching";
+  const teaching =
+    (record.payload?.teaching as
+      | { level: string; format: string; hours: number; outcome: string }
+      | undefined) ?? null;
 
   return (
     <div className="grid gap-6 lg:grid-cols-3">
@@ -37,7 +42,9 @@ export default async function RecordPage({ params }: { params: Promise<{ id: str
                     @{record.worker.handle}
                   </Link>
                 ) : null}
-                {!isHidden && record.client_handle ? <> · for {record.client_handle}</> : null}
+                {!isHidden && record.client_handle ? (
+                  <> · {isTeaching ? "taught" : "for"} {record.client_handle}</>
+                ) : null}
               </p>
             </div>
             <StatusBadge status={record.status} mode={record.mode} revealed={Boolean(record.revealed_at)} />
@@ -68,6 +75,20 @@ export default async function RecordPage({ params }: { params: Promise<{ id: str
                 <span>Start: {formatDate(record.start_date)}</span>
                 <span>End: {formatDate(record.end_date)}</span>
               </div>
+
+              {isTeaching && teaching && (
+                <div className="mt-4 rounded-lg border border-[var(--color-line)] bg-[var(--color-ink)] p-4">
+                  <div className="flex flex-wrap gap-2">
+                    <Pill>{teaching.level}</Pill>
+                    <Pill>{teaching.format}</Pill>
+                    <Pill>{teaching.hours}h</Pill>
+                  </div>
+                  <p className="mt-3 text-xs uppercase tracking-wide text-[var(--color-fog)]">
+                    Outcome — what the student can now do
+                  </p>
+                  <p className="mt-1 text-[var(--color-mist)]">{teaching.outcome}</p>
+                </div>
+              )}
             </>
           )}
         </div>

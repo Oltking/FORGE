@@ -4,21 +4,35 @@ import { z } from "zod";
 
 export const scopeSchema = z.enum(["small", "medium", "large"]);
 
-export const workPayloadSchema = z.object({
-  kind: z.literal("work_record"),
-  v: z.literal(1),
-  title: z.string().min(1).max(200),
-  description: z.string().min(1).max(5000),
-  worker: z.string().min(1).max(80),
-  worker_type: z.enum(["human", "agent"]),
-  client: z.string().min(1).max(120),
-  domain: z.string().min(1).max(80),
-  scope: scopeSchema,
-  start_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  end_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  deliverable_ref: z.string().max(300).default(""),
-  tags: z.array(z.string().min(1).max(40)).max(5).default([]),
+export const teachingDetailSchema = z.object({
+  level: z.enum(["intro", "intermediate", "advanced"]),
+  format: z.enum(["1:1", "cohort", "async"]),
+  hours: z.number().min(0).max(10000),
+  outcome: z.string().min(1).max(2000),
 });
+
+export const workPayloadSchema = z
+  .object({
+    kind: z.literal("work_record"),
+    v: z.literal(1),
+    record_type: z.enum(["work", "teaching"]).default("work"),
+    title: z.string().min(1).max(200),
+    description: z.string().min(1).max(5000),
+    worker: z.string().min(1).max(80),
+    worker_type: z.enum(["human", "agent"]),
+    client: z.string().min(1).max(120),
+    domain: z.string().min(1).max(80),
+    scope: scopeSchema,
+    start_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    end_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    deliverable_ref: z.string().max(300).default(""),
+    tags: z.array(z.string().min(1).max(40)).max(5).default([]),
+    teaching: teachingDetailSchema.nullable().default(null),
+  })
+  .refine((p) => p.record_type !== "teaching" || p.teaching != null, {
+    message: "teaching detail is required for a teaching record",
+    path: ["teaching"],
+  });
 
 export type WorkPayloadInput = z.infer<typeof workPayloadSchema>;
 

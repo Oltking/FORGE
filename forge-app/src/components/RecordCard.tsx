@@ -27,7 +27,8 @@ export function RecordCard({ record }: { record: WorkRecordWithRelations }) {
             {!isHidden && record.client_handle ? (
               <>
                 {" "}
-                · for <span className="text-[var(--color-mist)]">{record.client_handle}</span>
+                · {record.record_type === "teaching" ? "taught" : "for"}{" "}
+                <span className="text-[var(--color-mist)]">{record.client_handle}</span>
               </>
             ) : null}
           </p>
@@ -37,6 +38,7 @@ export function RecordCard({ record }: { record: WorkRecordWithRelations }) {
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <TrustBadge tier={record.trust_tier} />
+        {record.record_type === "teaching" ? <Pill>Teaching</Pill> : null}
         {!isHidden && record.domain ? <Pill>{record.domain}</Pill> : null}
         {!isHidden && record.scope ? <Pill>{record.scope}</Pill> : null}
         {record.worker?.kind === "agent" ? <Pill>AI agent</Pill> : null}

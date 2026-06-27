@@ -4,19 +4,27 @@
  * plaintext + salt never leave the browser.
  */
 
-import { computeCommitment, type WorkRecordPayload } from "../crypto/commitment";
+import {
+  computeCommitment,
+  type TeachingDetail,
+  type WorkRecordPayload,
+} from "../crypto/commitment";
 import { randomSalt } from "../crypto/hash";
 
 export interface SealDraft {
+  record_type: "work" | "teaching";
   title: string;
   description: string;
+  /** Client, or student for a teaching record. */
   client: string;
+  /** Domain, or subject for a teaching record. */
   domain: string;
   scope: "small" | "medium" | "large";
   start_date: string;
   end_date: string;
   deliverable_ref: string;
   tags: string[];
+  teaching?: TeachingDetail;
 }
 
 export interface BuiltSeal {
@@ -33,6 +41,7 @@ export async function buildSeal(
   const payload: WorkRecordPayload = {
     kind: "work_record",
     v: 1,
+    record_type: draft.record_type,
     title: draft.title.trim(),
     description: draft.description.trim(),
     worker,
@@ -44,6 +53,7 @@ export async function buildSeal(
     end_date: draft.end_date,
     deliverable_ref: draft.deliverable_ref.trim(),
     tags: draft.tags.map((t) => t.trim()).filter(Boolean).slice(0, 5),
+    teaching: draft.record_type === "teaching" && draft.teaching ? draft.teaching : null,
   };
   const salt = randomSalt();
   const commitment = await computeCommitment(payload, salt);
