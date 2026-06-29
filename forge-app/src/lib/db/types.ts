@@ -113,3 +113,37 @@ export interface WorkRecordWithRelations extends WorkRecord {
   attestations?: Attestation[];
   batch?: AnchorBatch | null;
 }
+
+// --- proofs (the generic proof engine) ---
+
+export type ProofType = "generic" | "ai_eval" | "work" | "priority" | "forecast";
+export type ProofVisibility = "sealed" | "partial" | "revealed";
+
+/** A disclosed field opening, as stored/served for public verification. */
+export interface StoredOpening {
+  value: unknown;
+  salt: string;
+  proof: MerkleProofStep[];
+}
+
+export interface Proof {
+  id: string;
+  author_id: string | null;
+  proof_type: ProofType;
+  title: string;
+  description: string;
+  root: string;
+  field_keys: string[];
+  disclosed: Record<string, StoredOpening>;
+  visibility: ProofVisibility;
+  batch_id: string | null;
+  leaf_index: number | null;
+  merkle_proof: MerkleProofStep[] | null;
+  created_at: string;
+  revealed_at: string | null;
+}
+
+export interface ProofWithRelations extends Proof {
+  author?: Profile | null;
+  batch?: AnchorBatch | null;
+}

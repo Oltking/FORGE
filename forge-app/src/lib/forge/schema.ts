@@ -65,6 +65,32 @@ export const revealSchema = z.object({
   salt: hex32plus,
 });
 
+// --- proofs (the generic proof engine) ---
+
+const merkleStepSchema = z.object({
+  hash: z.string().regex(/^[0-9a-f]{64}$/i),
+  position: z.enum(["left", "right"]),
+});
+
+export const createProofSchema = z.object({
+  proof_type: z.enum(["generic", "ai_eval", "work", "priority", "forecast"]).default("generic"),
+  title: z.string().min(1).max(200),
+  description: z.string().max(5000).default(""),
+  root: z.string().regex(/^[0-9a-f]{64}$/i, "must be 32-byte hex"),
+  field_keys: z.array(z.string().min(1).max(80)).min(1).max(100),
+});
+
+export const openingSchema = z.object({
+  key: z.string().min(1).max(80),
+  value: z.unknown(),
+  salt: z.string().regex(/^[0-9a-f]{16,}$/i),
+  proof: z.array(merkleStepSchema),
+});
+
+export const discloseSchema = z.object({
+  openings: z.array(openingSchema).min(1),
+});
+
 export const createProfileSchema = z.object({
   handle: z
     .string()

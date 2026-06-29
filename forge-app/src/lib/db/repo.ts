@@ -11,6 +11,8 @@ import type {
   ForgeContract,
   MerkleProofStep,
   Profile,
+  Proof,
+  ProofWithRelations,
   WorkRecord,
   WorkRecordWithRelations,
 } from "./types";
@@ -164,6 +166,44 @@ export async function listAttestationsByRecord(db: DB, recordId: string): Promis
     .order("created_at", { ascending: true });
   if (error) throw new Error(`listAttestationsByRecord: ${error.message}`);
   return data ?? [];
+}
+
+// --- proofs ----------------------------------------------------------------
+
+export async function createProof(db: DB, input: Partial<Proof>): Promise<Proof> {
+  const { data, error } = await db.from("proofs").insert(input).select("*").single();
+  return unwrap(data, error, "createProof");
+}
+
+export async function updateProof(db: DB, id: string, patch: Partial<Proof>): Promise<Proof> {
+  const { data, error } = await db.from("proofs").update(patch).eq("id", id).select("*").single();
+  return unwrap(data, error, "updateProof");
+}
+
+export async function getProofById(db: DB, id: string): Promise<Proof | null> {
+  const { data, error } = await db.from("proofs").select("*").eq("id", id).maybeSingle();
+  if (error) throw new Error(`getProofById: ${error.message}`);
+  return data;
+}
+
+export async function getProofWithRelations(db: DB, id: string): Promise<ProofWithRelations | null> {
+  const { data, error } = await db
+    .from("proofs")
+    .select("*, author:profiles!proofs_author_id_fkey(*), batch:anchor_batches(*)")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw new Error(`getProofWithRelations: ${error.message}`);
+  return data as unknown as ProofWithRelations | null;
+}
+
+export async function listRecentProofs(db: DB, limit = 20): Promise<ProofWithRelations[]> {
+  const { data, error } = await db
+    .from("proofs")
+    .select("*, author:profiles!proofs_author_id_fkey(*), batch:anchor_batches(*)")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) throw new Error(`listRecentProofs: ${error.message}`);
+  return (data ?? []) as unknown as ProofWithRelations[];
 }
 
 // --- contracts -------------------------------------------------------------

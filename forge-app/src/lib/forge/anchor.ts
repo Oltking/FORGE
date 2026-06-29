@@ -14,7 +14,7 @@ import { createBatch } from "../db/repo";
 import type { AnchorBatch } from "../db/types";
 
 interface Anchorable {
-  table: "work_records" | "forge_contracts";
+  table: "work_records" | "forge_contracts" | "proofs";
   id: string;
   commitment: string;
 }
@@ -88,6 +88,17 @@ async function collectAnchorable(db: SupabaseClient): Promise<Anchorable[]> {
   if (cErr) throw new Error(`collectAnchorable(contracts): ${cErr.message}`);
   for (const c of contracts ?? []) {
     items.push({ table: "forge_contracts", id: c.id as string, commitment: c.commitment as string });
+  }
+
+  // Proofs anchor by their selective-disclosure root.
+  const { data: proofs, error: pErr } = await db
+    .from("proofs")
+    .select("id, root")
+    .is("batch_id", null)
+    .order("created_at", { ascending: true });
+  if (pErr) throw new Error(`collectAnchorable(proofs): ${pErr.message}`);
+  for (const p of proofs ?? []) {
+    items.push({ table: "proofs", id: p.id as string, commitment: p.root as string });
   }
 
   return items;
