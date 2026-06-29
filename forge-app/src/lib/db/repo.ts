@@ -186,6 +186,16 @@ export async function getProofById(db: DB, id: string): Promise<Proof | null> {
   return data;
 }
 
+export async function getProofByRoot(db: DB, root: string): Promise<Proof | null> {
+  const { data, error } = await db
+    .from("proofs")
+    .select("*")
+    .eq("root", root.toLowerCase())
+    .maybeSingle();
+  if (error) throw new Error(`getProofByRoot: ${error.message}`);
+  return data;
+}
+
 export async function getProofWithRelations(db: DB, id: string): Promise<ProofWithRelations | null> {
   const { data, error } = await db
     .from("proofs")

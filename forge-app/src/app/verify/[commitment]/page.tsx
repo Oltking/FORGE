@@ -1,8 +1,10 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { isSupabaseConfigured } from "@/lib/env";
 import { ConfigNotice } from "@/components/ConfigNotice";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { verifyRecordByCommitment } from "@/lib/forge/verify";
+import { getProofByRoot } from "@/lib/db/repo";
 import { TrustBadge } from "@/components/badges";
 import { CopyHash } from "@/components/CopyHash";
 import { formatDateTimeUTC } from "@/lib/format";
@@ -18,6 +20,12 @@ export default async function VerifyResultPage({
   if (!isSupabaseConfigured()) return <ConfigNotice />;
   const { commitment } = await params;
   const db = await createSupabaseServerClient();
+
+  // A proof's fingerprint (root) lives in the proofs table — send those to the
+  // proof page, which is the full verification view.
+  const proof = await getProofByRoot(db, commitment);
+  if (proof) redirect(`/proof/${proof.id}`);
+
   const result = await verifyRecordByCommitment(db, commitment);
 
   const verified =

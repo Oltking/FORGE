@@ -25,13 +25,13 @@ export default function VerifySearchPage() {
         <h1 className="text-2xl font-bold">Verify a record</h1>
       </div>
       <p className="mb-6 text-[var(--color-fog)]">
-        Paste a commitment hash to check it against HACD — was it sealed, when, by whom, and
-        is it unaltered. Verification runs against the chain, not against Forge.
+        Paste a proof <span className="text-[var(--color-mist)]">fingerprint</span> (or a work-record
+        commitment) to check it — was it sealed, when, by whom, and is it unaltered.
       </p>
       <form onSubmit={go} className="space-y-3">
         <input
           className="input mono"
-          placeholder="commitment hash (64 hex characters)"
+          placeholder="fingerprint / hash (64 hex characters)"
           value={value}
           onChange={(e) => setValue(e.target.value)}
         />
