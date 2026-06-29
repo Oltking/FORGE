@@ -11,9 +11,9 @@ export const dynamic = "force-dynamic";
 
 const TYPE_LABEL: Record<string, string> = {
   ai_eval: "AI eval",
-  priority: "Priority / IP",
+  priority: "Idea",
   forecast: "Forecast",
-  work: "Work",
+  work: "Build",
   generic: "Proof",
 };
 

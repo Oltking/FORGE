@@ -8,9 +8,15 @@ export const dynamic = "force-dynamic";
 
 const EXAMPLES = [
   {
-    icon: "📊",
-    title: "Prove a result before you publish",
-    body: "Lock in your test scores or numbers first. Later, prove you didn't change them to look better.",
+    icon: "🛠️",
+    title: "Prove what you've built",
+    body: "Seal the features, projects, and releases you shipped. A builder track record nobody can fake.",
+    href: "/proofs/new",
+  },
+  {
+    icon: "🌿",
+    title: "Prove your open-source contributions",
+    body: "Paste a GitHub PR or commit and seal it on the record. Build in public, provably yours.",
     href: "/proofs/new",
   },
   {
@@ -20,15 +26,9 @@ const EXAMPLES = [
     href: "/proofs/new",
   },
   {
-    icon: "🧾",
-    title: "Prove your work — vouched for",
-    body: "Sealed work records your client co-signs. A track record nobody can fake, edit, or erase.",
-    href: "/explore",
-  },
-  {
-    icon: "🙈",
-    title: "Prove it without oversharing",
-    body: "Reveal only the parts you choose. The rest stays private — but still provably real.",
+    icon: "📊",
+    title: "Prove a result before you publish",
+    body: "Lock in your numbers first. Later, prove you didn't change them to look better.",
     href: "/proofs/new",
   },
 ];
