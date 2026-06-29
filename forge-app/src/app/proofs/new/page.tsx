@@ -210,10 +210,16 @@ export default function NewProofPage() {
           </button>
         </div>
 
-        <div className="rounded-lg border border-[var(--color-line)] bg-[var(--color-ink)] p-3 text-sm text-[var(--color-fog)]">
-          On seal, each field is committed under its own salt and Merkle-rooted. Only the root and
-          field <em>names</em> are stored. Your values + salts download as a keystore — keep it, it&apos;s
-          the only way to disclose later.
+        <div className="space-y-2 rounded-lg border border-[var(--color-line)] bg-[var(--color-ink)] p-3 text-sm text-[var(--color-fog)]">
+          <p>
+            <span className="text-[var(--color-mist)]">What happens when you seal:</span> your values
+            are locked and kept private — we only store their field names, never the values. Later you
+            decide which ones to reveal.
+          </p>
+          <p>
+            <span className="text-[var(--color-ember)]">Important:</span> a small key file downloads
+            automatically. Keep it safe — it&apos;s the only way to reveal these details later.
+          </p>
         </div>
 
         {error && <p style={{ color: "#f87171" }} className="text-sm">{error}</p>}

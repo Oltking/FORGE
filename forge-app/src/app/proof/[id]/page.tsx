@@ -9,7 +9,9 @@ import { Diamond } from "@/components/Diamond";
 import { Pill } from "@/components/badges";
 import { DisclosePanel } from "@/components/DisclosePanel";
 import { AnchorButton } from "@/components/AnchorButton";
-import { formatDateTimeUTC, shortHash } from "@/lib/format";
+import { PlainCallout } from "@/components/PlainCallout";
+import { InfoHint } from "@/components/InfoHint";
+import { formatDate, formatDateTimeUTC, shortHash } from "@/lib/format";
 import { diamondExplorerUrl, blockExplorerUrl } from "@/lib/hacash/diamond";
 
 export const dynamic = "force-dynamic";
@@ -38,9 +40,39 @@ export default async function ProofPage({ params }: { params: Promise<{ id: stri
   const anchoredOk = result.inclusionValid === true;
   const fullyVerified = anchoredOk && (result.disclosedValid ?? true);
 
+  const who = proof.author ? `@${proof.author.handle}` : "Someone";
+  const sealedOn = formatDate(proof.created_at);
+  const plain: { icon: string; tone: "good" | "warn" | "neutral"; text: string } = !proof.batch
+    ? {
+        icon: "⏳",
+        tone: "warn",
+        text: `Just sealed — Forge is saving it to the permanent record now. Once that's done, it can never be changed or back-dated.`,
+      }
+    : disclosedKeys.length === 0
+      ? {
+          icon: "🔒",
+          tone: "neutral",
+          text: `${who} sealed this on ${sealedOn} and saved it permanently. The details are still private — they can be revealed later and proven to be exactly what was sealed today.`,
+        }
+      : fullyVerified
+        ? {
+            icon: "✅",
+            tone: "good",
+            text: `${who} sealed this on ${sealedOn}, before sharing it. The revealed details below are genuine and have not been changed since. Any field still marked "sealed" stays private.`,
+          }
+        : {
+            icon: "⚠️",
+            tone: "warn",
+            text: `Something doesn't add up — a revealed detail or the saved record doesn't match what was originally sealed. Treat this proof with caution.`,
+          };
+
   return (
     <div className="grid gap-6 lg:grid-cols-3">
       <div className="space-y-6 lg:col-span-2">
+        <PlainCallout icon={plain.icon} tone={plain.tone}>
+          {plain.text}
+        </PlainCallout>
+
         <div
           className="card overflow-hidden"
           style={{ borderColor: fullyVerified && proof.batch ? "rgba(52,211,153,0.4)" : "var(--color-line)" }}
@@ -68,8 +100,12 @@ export default async function ProofPage({ params }: { params: Promise<{ id: stri
 
             {/* Sealed fields */}
             <div>
-              <p className="mb-2 text-xs uppercase tracking-wide text-[var(--color-fog)]">
-                Sealed fields ({proof.field_keys.length})
+              <p className="mb-2 flex items-center text-xs uppercase tracking-wide text-[var(--color-fog)]">
+                Details ({proof.field_keys.length})
+                <InfoHint>
+                  Each item was locked separately. 🔒 means it&apos;s still private. A value with a
+                  green ✓ has been revealed and proven to match exactly what was sealed.
+                </InfoHint>
               </p>
               <div className="overflow-hidden rounded-lg border border-[var(--color-line)]">
                 {proof.field_keys.map((key, i) => {
@@ -132,11 +168,18 @@ export default async function ProofPage({ params }: { params: Promise<{ id: stri
         <div className="card p-5">
           <div className="mb-3 flex items-center gap-2 text-white">
             <Diamond size={16} />
-            <h3 className="font-semibold">On-chain anchor</h3>
+            <h3 className="font-semibold">Where it&apos;s saved</h3>
+            <InfoHint>
+              The technical proof that this record is permanent and tamper-proof. You don&apos;t need
+              any of this to trust it — it&apos;s here for anyone who wants to check independently.
+            </InfoHint>
           </div>
           <dl className="space-y-2 text-sm">
-            <Item label="Sealed">{formatDateTimeUTC(proof.created_at)}</Item>
-            <Item label="HACD">
+            <Item label="Sealed on">{formatDateTimeUTC(proof.created_at)}</Item>
+            <Item
+              label="Ledger slot"
+              hint="HACD — a unique slot on the Hacash public ledger where this proof's fingerprint is permanently written."
+            >
               {proof.batch ? (
                 <a href={diamondExplorerUrl(proof.batch.diamond)} target="_blank" rel="noreferrer" className="mono text-[var(--color-ember)] hover:underline">
                   {proof.batch.diamond}
@@ -154,10 +197,16 @@ export default async function ProofPage({ params }: { params: Promise<{ id: stri
                 <span className="mono">—</span>
               )}
             </Item>
-            <Item label="Backend">
+            <Item
+              label="Saved to"
+              hint="'hacash' = written to the public Hacash blockchain. 'local' = a development copy (still cryptographically real, just not on the public chain yet)."
+            >
               <span className="mono">{proof.batch?.backend ?? "—"}</span>
             </Item>
-            <Item label="Proof root">
+            <Item
+              label="Fingerprint"
+              hint="A unique code computed from your sealed details. It can't be reversed into the details, but it changes if even one character changes — so it proves nothing was altered."
+            >
               <span className="mono text-xs">{shortHash(proof.root, 8, 6)}</span>
             </Item>
             <Item label="Status">
@@ -183,10 +232,21 @@ export default async function ProofPage({ params }: { params: Promise<{ id: stri
   );
 }
 
-function Item({ label, children }: { label: string; children: React.ReactNode }) {
+function Item({
+  label,
+  hint,
+  children,
+}: {
+  label: string;
+  hint?: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="flex items-center justify-between gap-3 border-b border-[var(--color-line)] pb-2 last:border-0">
-      <dt className="text-[var(--color-fog)]">{label}</dt>
+      <dt className="flex items-center text-[var(--color-fog)]">
+        {label}
+        {hint ? <InfoHint>{hint}</InfoHint> : null}
+      </dt>
       <dd className="text-right text-white">{children}</dd>
     </div>
   );

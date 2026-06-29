@@ -86,14 +86,15 @@ export function DisclosePanel({
 
   return (
     <div className="card p-5">
-      <h3 className="font-semibold text-white">Disclose fields</h3>
+      <h3 className="font-semibold text-white">Reveal details</h3>
       <p className="mt-1 text-sm text-[var(--color-fog)]">
-        Load your keystore, pick which fields to reveal. The rest stay sealed.
+        Load the key file you saved when you sealed this, then pick which details to reveal. The rest
+        stay private.
       </p>
 
       {!keystore ? (
         <label className="btn btn-ghost mt-4 inline-flex cursor-pointer text-sm">
-          Load keystore
+          Load key file
           <input type="file" accept="application/json" className="hidden" onChange={onFile} />
         </label>
       ) : (
@@ -107,7 +108,7 @@ export function DisclosePanel({
             ))}
           </div>
           <button onClick={disclose} disabled={busy || selected.size === 0} className="btn btn-ember mt-4 disabled:opacity-50">
-            {busy ? "Disclosing…" : `Disclose ${selected.size || ""} field(s)`}
+            {busy ? "Revealing…" : `Reveal ${selected.size || ""} detail(s)`}
           </button>
         </>
       )}

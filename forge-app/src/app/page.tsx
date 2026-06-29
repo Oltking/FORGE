@@ -2,111 +2,105 @@ import Link from "next/link";
 import { loadFeed } from "@/lib/page-data";
 import { RecordCard } from "@/components/RecordCard";
 import { Diamond } from "@/components/Diamond";
+import { HowItWorks } from "@/components/HowItWorks";
 
 export const dynamic = "force-dynamic";
 
-const TIERS = [
+const EXAMPLES = [
   {
-    title: "Self-attested",
-    body: "You seal a record. Timestamped, un-backdatable. The starting point.",
-    color: "#9ca3af",
+    icon: "📊",
+    title: "Prove a result before you publish",
+    body: "Lock in your test scores or numbers first. Later, prove you didn't change them to look better.",
+    href: "/proofs/new",
   },
   {
-    title: "Human-attested",
-    body: "Your client co-signs. Both put real HAC behind it. Neither can deny it.",
-    color: "#34d399",
+    icon: "💡",
+    title: "Prove you had an idea first",
+    body: "Seal an idea, design, or plan privately. If someone copies it later, prove you got there first.",
+    href: "/proofs/new",
   },
   {
-    title: "Machine-attested",
-    body: "An oracle verifies an objective fact: PR merged, contract deployed, tests passed.",
-    color: "#60a5fa",
+    icon: "🧾",
+    title: "Prove your work — vouched for",
+    body: "Sealed work records your client co-signs. A track record nobody can fake, edit, or erase.",
+    href: "/explore",
+  },
+  {
+    icon: "🙈",
+    title: "Prove it without oversharing",
+    body: "Reveal only the parts you choose. The rest stays private — but still provably real.",
+    href: "/proofs/new",
   },
 ];
 
 export default async function HomePage() {
-  const feed = await loadFeed(9);
+  const feed = await loadFeed(6);
 
   return (
     <div className="space-y-16">
       {/* Hero */}
       <section className="pt-8 text-center">
         <div className="mx-auto mb-5 inline-flex items-center gap-2 rounded-full border border-[var(--color-line)] bg-[var(--color-panel)] px-3 py-1 text-xs text-[var(--color-fog)]">
-          <Diamond size={13} /> Proof of work, for work — on HACD
+          <Diamond size={13} /> Proof you can trust — without oversharing
         </div>
         <h1 className="mx-auto max-w-3xl text-balance text-5xl font-bold leading-[1.05] tracking-tight text-white">
-          Nothing you build should disappear.
+          Prove it&apos;s true. Keep what&apos;s private, private.
         </h1>
         <p className="mx-auto mt-5 max-w-xl text-lg text-[var(--color-fog)]">
-          Forge is a two-party work attestation protocol. Seal what you built, have your
-          client co-sign it, and own a permanent credential anchored on HACD — that
-          neither party can edit, delete, or deny.
+          Forge lets you prove something is real — a result, an idea, your work — without revealing
+          the private details. Once it&apos;s sealed, nobody can fake it, change it, or back-date it.
         </p>
         <div className="mt-7 flex items-center justify-center gap-3">
-          <Link href="/seal" className="btn btn-ember">
-            Seal your work
+          <Link href="/proofs/new" className="btn btn-ember">
+            Seal a proof
           </Link>
-          <Link href="/explore" className="btn btn-ghost">
-            Explore records
+          <Link href="/proofs" className="btn btn-ghost">
+            See examples
           </Link>
         </div>
-        <p className="mt-8 mono text-sm text-[var(--color-fog)]">
-          Bitcoin proved PoW for money. HACD brings PoW to assets.{" "}
-          <span className="text-[var(--color-ember)]">Forge brings PoW to work.</span>
-        </p>
       </section>
 
-      {/* Trust tiers */}
-      <section className="grid gap-4 sm:grid-cols-3">
-        {TIERS.map((t) => (
-          <div key={t.title} className="card p-5">
-            <div className="mb-2 h-1.5 w-10 rounded-full" style={{ background: t.color }} />
-            <h3 className="font-semibold text-white">{t.title}</h3>
-            <p className="mt-1.5 text-sm text-[var(--color-fog)]">{t.body}</p>
-          </div>
-        ))}
-      </section>
+      <HowItWorks />
 
-      {/* Feed */}
+      {/* What can you prove */}
       <section>
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-white">Recently sealed</h2>
-          <Link href="/explore" className="text-sm text-[var(--color-ember)] hover:underline">
-            View all →
-          </Link>
+        <h2 className="mb-6 text-center text-lg font-semibold text-white">What can you prove?</h2>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {EXAMPLES.map((e) => (
+            <Link key={e.title} href={e.href} className="card flex gap-4 p-5 hover:border-[var(--color-fog)]">
+              <span className="text-2xl">{e.icon}</span>
+              <div>
+                <h3 className="font-semibold text-white">{e.title}</h3>
+                <p className="mt-1 text-sm text-[var(--color-fog)]">{e.body}</p>
+              </div>
+            </Link>
+          ))}
         </div>
+      </section>
 
-        {feed === null ? (
-          <EmptyFeed setup />
-        ) : feed.length === 0 ? (
-          <EmptyFeed />
-        ) : (
+      {/* Recent activity */}
+      {feed && feed.length > 0 && (
+        <section>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-white">Recently on Forge</h2>
+            <Link href="/explore" className="text-sm text-[var(--color-ember)] hover:underline">
+              View all →
+            </Link>
+          </div>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {feed.map((r) => (
               <RecordCard key={r.id} record={r} />
             ))}
           </div>
-        )}
-      </section>
-    </div>
-  );
-}
-
-function EmptyFeed({ setup = false }: { setup?: boolean }) {
-  return (
-    <div className="card p-8 text-center text-sm text-[var(--color-fog)]">
-      {setup ? (
-        <>
-          Connect a Supabase project and run <span className="mono">npm run seed</span> to
-          populate the feed.
-        </>
-      ) : (
-        <>
-          No records yet.{" "}
-          <Link href="/seal" className="text-[var(--color-ember)] hover:underline">
-            Seal the first one →
-          </Link>
-        </>
+        </section>
       )}
+
+      {/* Closing line */}
+      <section className="border-t border-[var(--color-line)] pt-8 text-center">
+        <p className="mono text-sm text-[var(--color-fog)]">
+          Built on Hacash — a permanent public record no single company controls.
+        </p>
+      </section>
     </div>
   );
 }
