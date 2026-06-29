@@ -57,14 +57,17 @@ export function Nav() {
           <span className="tracking-tight">Forge</span>
         </Link>
         <nav className="flex items-center gap-1 text-sm">
+          <Link href="/proofs" className="rounded-md px-3 py-1.5 text-[var(--color-mist)] hover:bg-[var(--color-panel-2)]">
+            Proofs
+          </Link>
           <Link href="/explore" className="rounded-md px-3 py-1.5 text-[var(--color-mist)] hover:bg-[var(--color-panel-2)]">
-            Explore
+            Work
           </Link>
           <Link href="/verify" className="rounded-md px-3 py-1.5 text-[var(--color-mist)] hover:bg-[var(--color-panel-2)]">
             Verify
           </Link>
-          <Link href="/seal" className="btn btn-ember ml-1 px-3 py-1.5 text-sm">
-            Seal work
+          <Link href="/proofs/new" className="btn btn-ember ml-1 px-3 py-1.5 text-sm">
+            Seal a proof
           </Link>
           {me ? (
             <div className="ml-1 flex items-center gap-1">

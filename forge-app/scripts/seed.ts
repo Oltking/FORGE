@@ -13,7 +13,9 @@ import { createPublicSeal } from "../src/lib/forge/seal";
 import { attestRecord } from "../src/lib/forge/attest";
 import { anchorPending } from "../src/lib/forge/anchor";
 import { buildSeal } from "../src/lib/forge/client";
-import { getProfileByHandle, createProfile } from "../src/lib/db/repo";
+import { createProofRecord, discloseProofFields } from "../src/lib/forge/proof";
+import { sealFields, discloseFields } from "../src/lib/crypto/disclosure";
+import { getProfileByHandle, createProfile, getProofById } from "../src/lib/db/repo";
 import type { Profile } from "../src/lib/db/types";
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -85,6 +87,12 @@ async function main() {
   });
   const alex = await ensureProfile({ handle: "alex.eth", display_name: "Alex" });
   const sam = await ensureProfile({ handle: "sam.dev", display_name: "Sam" });
+  const openlab = await ensureProfile({
+    handle: "openlab",
+    display_name: "OpenLab",
+    bio: "Independent AI evaluation lab. Pre-registers every benchmark on Forge.",
+    domains: ["AI/ML", "Evaluation"],
+  });
 
   console.log("Sealing records…");
   const r1 = await seal(mira, {
@@ -183,9 +191,32 @@ async function main() {
   });
   // r3 intentionally left unattested — a one-party seal (the absence is signal).
 
+  console.log("Sealing AI-eval proof (pre-registration)…");
+  const evalFields = {
+    model: "forge-eval-1",
+    benchmark: "MMLU-pro",
+    test_set_hash: "9f2a1c4e7b3d8a6f5e2c1b0a9d8c7b6a5f4e3d2c1b0a9d8c",
+    protocol: "0-shot, temperature 0, sealed before release",
+    claimed_score: "0.913",
+    date: "2026-06-20",
+  };
+  const sealed = await sealFields(evalFields);
+  const evalProof = await createProofRecord(db, openlab.id, {
+    proof_type: "ai_eval",
+    title: "forge-eval-1 on MMLU-pro — pre-registered",
+    description: "Results sealed before publication. Disclosed after release; the rest stay sealed.",
+    root: sealed.root,
+    field_keys: sealed.fields.map((f) => f.key),
+  });
+
   console.log("Anchoring batch…");
   const res = await anchorPending(db);
   console.log(res.message);
+
+  console.log("Disclosing eval headline fields (keeping test set + protocol sealed)…");
+  const openings = await discloseFields(sealed, ["model", "benchmark", "claimed_score", "date"]);
+  const freshProof = await getProofById(db, evalProof.id);
+  if (freshProof) await discloseProofFields(db, freshProof, openings);
 
   console.log("\nSeed complete. Records:", [r1, r2, r3, r4].map((r) => r.id).join(", "));
 }
