@@ -16,6 +16,9 @@ forge-app/next-env.d.ts
 **/dist/
 **/*.tsbuildinfo
 
+# vercel
+**/.vercel
+
 # logs
 **/*.log
 npm-debug.log*
