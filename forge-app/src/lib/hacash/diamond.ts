@@ -39,3 +39,7 @@ export function diamondExplorerUrl(name: string): string {
 export function blockExplorerUrl(height: number): string {
   return `https://explorer.hacash.org/block/${height}`;
 }
+
+export function txExplorerUrl(hash: string): string {
+  return `https://explorer.hacash.org/tx/${hash}`;
+}

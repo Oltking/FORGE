@@ -12,7 +12,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "seed": "node --env-file=.env.local --import tsx scripts/seed.ts",
-    "anchor": "node --env-file=.env.local --import tsx scripts/anchor.ts"
+    "anchor": "node --env-file=.env.local --import tsx scripts/anchor.ts",
+    "audit": "node --env-file=.env.local --import tsx scripts/audit.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.5.2",

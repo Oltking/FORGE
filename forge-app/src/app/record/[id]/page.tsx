@@ -5,7 +5,9 @@ import { ConfigNotice } from "@/components/ConfigNotice";
 import { StatusBadge, TrustBadge, Pill } from "@/components/badges";
 import { Diamond } from "@/components/Diamond";
 import { AttestPanel } from "@/components/AttestPanel";
-import { formatDate, formatDateTimeUTC, shortHash } from "@/lib/format";
+import { formatDate, formatDateTimeUTC } from "@/lib/format";
+import { CopyHash } from "@/components/CopyHash";
+import { diamondExplorerUrl } from "@/lib/hacash/diamond";
 import { getSession } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
@@ -22,6 +24,7 @@ export default async function RecordPage({ params }: { params: Promise<{ id: str
   const canAttest = Boolean(profile) && !isOwner && !isHidden;
   const attestations = record.attestations ?? [];
   const isTeaching = record.record_type === "teaching";
+  const recordOnChain = record.batch?.backend === "hacash";
   const teaching =
     (record.payload?.teaching as
       | { level: string; format: string; hours: number; outcome: string }
@@ -133,24 +136,30 @@ export default async function RecordPage({ params }: { params: Promise<{ id: str
         <div className="card p-5">
           <div className="mb-3 flex items-center gap-2 text-white">
             <Diamond size={16} />
-            <h3 className="font-semibold">On-chain anchor</h3>
+            <h3 className="font-semibold">Where it&apos;s saved</h3>
           </div>
           <dl className="space-y-2 text-sm">
             <Item label="Trust tier">
               <TrustBadge tier={record.trust_tier} />
             </Item>
             <Item label="Sealed">{formatDateTimeUTC(record.created_at)}</Item>
-            <Item label="HACD">
-              <span className="mono">{record.batch?.diamond ?? "pending"}</span>
+            <Item label="Fingerprint">
+              <CopyHash value={record.commitment} href={recordOnChain ? diamondExplorerUrl(record.batch!.diamond) : undefined} />
             </Item>
-            <Item label="Block">
-              <span className="mono">{record.batch?.block_height?.toLocaleString() ?? "—"}</span>
-            </Item>
-            <Item label="Backend">
-              <span className="mono">{record.batch?.backend ?? "—"}</span>
-            </Item>
-            <Item label="Commitment">
-              <span className="mono text-xs">{shortHash(record.commitment, 8, 6)}</span>
+            {record.batch && (
+              <Item label="Ledger slot">
+                <CopyHash value={record.batch.diamond} href={recordOnChain ? diamondExplorerUrl(record.batch.diamond) : undefined} />
+              </Item>
+            )}
+            {record.batch?.block_height && (
+              <Item label="Block">
+                <span className="mono">{record.batch.block_height.toLocaleString()}</span>
+              </Item>
+            )}
+            <Item label="Saved to">
+              <span className={recordOnChain ? "text-[var(--color-green)]" : "text-[var(--color-fog)]"}>
+                {!record.batch ? "saving…" : recordOnChain ? "Hacash blockchain" : "Forge ledger (dev)"}
+              </span>
             </Item>
           </dl>
           <div className="mt-4 flex flex-col gap-2">

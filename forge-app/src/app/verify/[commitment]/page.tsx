@@ -3,9 +3,9 @@ import { isSupabaseConfigured } from "@/lib/env";
 import { ConfigNotice } from "@/components/ConfigNotice";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { verifyRecordByCommitment } from "@/lib/forge/verify";
-import { Diamond } from "@/components/Diamond";
 import { TrustBadge } from "@/components/badges";
-import { formatDateTimeUTC, shortHash } from "@/lib/format";
+import { CopyHash } from "@/components/CopyHash";
+import { formatDateTimeUTC } from "@/lib/format";
 import { blockExplorerUrl, diamondExplorerUrl } from "@/lib/hacash/diamond";
 
 export const dynamic = "force-dynamic";
@@ -27,6 +27,7 @@ export default async function VerifyResultPage({
 
   const record = result.record;
   const batch = result.batch;
+  const onChain = batch?.backend === "hacash";
   const isHidden = record?.mode === "nda" && !record?.revealed_at;
 
   return (
@@ -84,11 +85,7 @@ export default async function VerifyResultPage({
             {batch && (
               <>
                 <Row label="HACD">
-                  <a href={diamondExplorerUrl(batch.diamond)} target="_blank" rel="noreferrer" className="mono text-[var(--color-ember)] hover:underline">
-                    <span className="inline-flex items-center gap-1">
-                      <Diamond size={12} /> {batch.diamond}
-                    </span>
-                  </a>
+                  <CopyHash value={batch.diamond} href={onChain ? diamondExplorerUrl(batch.diamond) : undefined} />
                 </Row>
                 {batch.block_height && (
                   <Row label="Block">
@@ -97,19 +94,18 @@ export default async function VerifyResultPage({
                     </a>
                   </Row>
                 )}
-                <Row label="Backend">
-                  <span className="mono">{batch.backend}</span>
-                  {batch.backend === "local" && (
-                    <span className="ml-2 text-xs text-[var(--color-fog)]">(off-chain dev anchor)</span>
-                  )}
+                <Row label="Saved to">
+                  <span className={onChain ? "text-[var(--color-green)]" : "text-[var(--color-fog)]"}>
+                    {onChain ? "Hacash blockchain" : "Forge ledger (dev)"}
+                  </span>
                 </Row>
                 <Row label="Merkle root">
-                  <span className="mono text-sm">{shortHash(batch.root, 12, 10)}</span>
+                  <CopyHash value={batch.root} href={onChain ? diamondExplorerUrl(batch.diamond) : undefined} />
                 </Row>
               </>
             )}
             <Row label="Commitment">
-              <span className="mono text-sm">{shortHash(record.commitment, 12, 10)}</span>
+              <CopyHash value={record.commitment} />
             </Row>
 
             <div className="rounded-lg border border-[var(--color-line)] bg-[var(--color-ink)] p-3">

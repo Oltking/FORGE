@@ -11,8 +11,9 @@ import { DisclosePanel } from "@/components/DisclosePanel";
 import { AnchorButton } from "@/components/AnchorButton";
 import { PlainCallout } from "@/components/PlainCallout";
 import { InfoHint } from "@/components/InfoHint";
-import { formatDate, formatDateTimeUTC, shortHash } from "@/lib/format";
-import { diamondExplorerUrl, blockExplorerUrl } from "@/lib/hacash/diamond";
+import { CopyHash } from "@/components/CopyHash";
+import { formatDate, formatDateTimeUTC } from "@/lib/format";
+import { diamondExplorerUrl, blockExplorerUrl, txExplorerUrl } from "@/lib/hacash/diamond";
 
 export const dynamic = "force-dynamic";
 
@@ -174,47 +175,58 @@ export default async function ProofPage({ params }: { params: Promise<{ id: stri
               any of this to trust it — it&apos;s here for anyone who wants to check independently.
             </InfoHint>
           </div>
-          <dl className="space-y-2 text-sm">
-            <Item label="Sealed on">{formatDateTimeUTC(proof.created_at)}</Item>
-            <Item
-              label="Ledger slot"
-              hint="HACD — a unique slot on the Hacash public ledger where this proof's fingerprint is permanently written."
-            >
-              {proof.batch ? (
-                <a href={diamondExplorerUrl(proof.batch.diamond)} target="_blank" rel="noreferrer" className="mono text-[var(--color-ember)] hover:underline">
-                  {proof.batch.diamond}
-                </a>
-              ) : (
-                <span className="mono">pending</span>
-              )}
-            </Item>
-            <Item label="Block">
-              {proof.batch?.block_height ? (
-                <a href={blockExplorerUrl(proof.batch.block_height)} target="_blank" rel="noreferrer" className="mono text-[var(--color-ember)] hover:underline">
-                  {proof.batch.block_height.toLocaleString()}
-                </a>
-              ) : (
-                <span className="mono">—</span>
-              )}
-            </Item>
-            <Item
-              label="Saved to"
-              hint="'hacash' = written to the public Hacash blockchain. 'local' = a development copy (still cryptographically real, just not on the public chain yet)."
-            >
-              <span className="mono">{proof.batch?.backend ?? "—"}</span>
-            </Item>
-            <Item
-              label="Fingerprint"
-              hint="A unique code computed from your sealed details. It can't be reversed into the details, but it changes if even one character changes — so it proves nothing was altered."
-            >
-              <span className="mono text-xs">{shortHash(proof.root, 8, 6)}</span>
-            </Item>
-            <Item label="Status">
-              <span style={{ color: proof.visibility === "revealed" ? "#34d399" : "var(--color-fog)" }}>
-                {proof.visibility}
-              </span>
-            </Item>
-          </dl>
+          {(() => {
+            const onChain = proof.batch?.backend === "hacash";
+            return (
+              <dl className="space-y-2 text-sm">
+                <Item label="Sealed on">{formatDateTimeUTC(proof.created_at)}</Item>
+                <Item
+                  label="Fingerprint"
+                  hint="A unique code computed from your sealed details. It can't be reversed into the details, but it changes if even one character changes — so it proves nothing was altered. This is what gets written to the ledger."
+                >
+                  <CopyHash value={proof.root} href={onChain ? diamondExplorerUrl(proof.batch!.diamond) : undefined} />
+                </Item>
+                {proof.batch && (
+                  <Item
+                    label="Ledger slot"
+                    hint="HACD — a unique slot on the Hacash ledger holding this proof's fingerprint."
+                  >
+                    <CopyHash
+                      value={proof.batch.diamond}
+                      href={onChain ? diamondExplorerUrl(proof.batch.diamond) : undefined}
+                    />
+                  </Item>
+                )}
+                {proof.batch?.tx_hash && (
+                  <Item label="Transaction" hint="The on-chain transaction that wrote this proof.">
+                    <CopyHash value={proof.batch.tx_hash} href={onChain ? txExplorerUrl(proof.batch.tx_hash) : undefined} />
+                  </Item>
+                )}
+                {proof.batch?.block_height && (
+                  <Item label="Block">
+                    <a href={blockExplorerUrl(proof.batch.block_height)} target="_blank" rel="noreferrer" className="mono text-[var(--color-ember)] hover:underline">
+                      {proof.batch.block_height.toLocaleString()}
+                    </a>
+                  </Item>
+                )}
+                <Item
+                  label="Saved to"
+                  hint="'Hacash blockchain' = written to the public chain, checkable on explorer.hacash.org. 'Forge ledger (dev)' = cryptographically real and tamper-proof, but not yet on the public chain."
+                >
+                  <span className={onChain ? "text-[var(--color-green)]" : "text-[var(--color-fog)]"}>
+                    {!proof.batch ? "saving…" : onChain ? "Hacash blockchain" : "Forge ledger (dev)"}
+                  </span>
+                </Item>
+              </dl>
+            );
+          })()}
+
+          {proof.batch && proof.batch.backend !== "hacash" && (
+            <p className="mt-3 border-t border-[var(--color-line)] pt-3 text-xs text-[var(--color-fog)]">
+              This proof is saved and tamper-proof, but not yet on the public Hacash chain — so there&apos;s
+              no explorer page to open. The fingerprint above is copyable and will match once published.
+            </p>
+          )}
         </div>
 
         {isAuthor && !proof.batch && (
