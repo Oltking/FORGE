@@ -31,3 +31,9 @@ npm-debug.log*
 
 # external clone (reference only, not part of this repo)
 skill/
+
+# private idea / strategy / design docs — kept locally, never published
+/Forge_brief.md
+/Forge_system_design.md
+/Forge_v4_proof_engine.md
+/project_forge/
